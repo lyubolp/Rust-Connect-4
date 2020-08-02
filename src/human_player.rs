@@ -1,8 +1,8 @@
-mod human_player{
+pub mod human_player{
     use crate::game::game::{Player, GameState, GAME_BOARD_SIZE};
     use std::io::{self, Read};
 
-    struct HumanPlayer{
+    pub struct HumanPlayer{
         board_value: u8,
         board_symbol: char
     }
@@ -27,15 +27,17 @@ mod human_player{
             }
         }
     }
-    impl Player for HumanPlayer{
-        fn init(board_value: u8, board_symbol: char) -> Self{
+    impl HumanPlayer{
+        pub fn new(board_value: u8, board_symbol: char) -> HumanPlayer{
             HumanPlayer {
                 board_value,
                 board_symbol
             }
         }
+    }
+    impl Player for HumanPlayer{
 
-        fn play(&self: Self, game_state: Option<GameState>) -> u8 {
+        fn play(&self, game_state: Option<GameState>) -> u8 {
             println!("Please enter a column number (1-{}): ", GAME_BOARD_SIZE.0);
             read_from_keyboard()
         }

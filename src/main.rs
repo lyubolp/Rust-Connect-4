@@ -1,4 +1,15 @@
+mod human_player;
 mod game;
-fn main() {
+mod bot;
+
+use game::game::GameState;
+fn main()
+{
     println!("Hello, world!");
+
+    let mut gs: GameState = GameState::init();
+
+    gs.create_and_add_player('+');
+    gs.create_and_add_player('-');
+    gs.turn();
 }

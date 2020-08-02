@@ -5,9 +5,10 @@ pub mod game{
 
     pub const PLAYER_ONE_SYMBOL: char = '+';
     pub const COMPUTER_SYMBOL: char = '-';*/
-
-
     use std::collections::HashMap;
+
+    use crate::human_player::human_player::HumanPlayer;
+    use std::borrow::{Borrow, BorrowMut};
 
     pub const EMPTY_PLACE_VALUE: u8 = 0;
     pub const EMPTY_PLACE_SYMBOL: char = '_';
@@ -17,8 +18,8 @@ pub mod game{
     pub const GAME_BOARD_SIZE: (usize, usize) = (7, 6); //(cols, rows)
 
     pub trait Player{
-        fn init(board_value: u8, board_symbol: char) -> Self;
-        fn play(&self: Self, game_state: Option<GameState>) -> u8;
+        //fn new(board_value: u8, board_symbol: char) -> Self;
+        fn play(&self, game_state: Option<GameState>) -> u8;
 
         fn get_board_value(&self) -> u8;
         fn get_board_symbol(&self) -> char;
@@ -27,7 +28,7 @@ pub mod game{
     pub struct GameState {
         field: [[u8; GAME_BOARD_SIZE.1]; GAME_BOARD_SIZE.0],
         last_filled_for_column: [u8; GAME_BOARD_SIZE.0],
-        values_players: HashMap<u8, dyn Player>
+        values_players: HashMap<u8, Box<dyn Player>>
     }
 
     pub enum MoveType{
@@ -39,22 +40,31 @@ pub mod game{
 
     impl GameState{
         pub fn init() -> GameState{
-            //TODO: Refactor it
             let temp = GameState{
                 field: [[EMPTY_PLACE_VALUE; GAME_BOARD_SIZE.1]; GAME_BOARD_SIZE.0],
                 last_filled_for_column: [0;GAME_BOARD_SIZE.0],
-                values_players: HashMap(),
+                values_players: HashMap::new()
             };
             temp
         }
 
-        pub fn place_on_board(&mut self, column: u8, played_id: usize)
-        {
-            let row = self.last_filled_for_column[column as usize] + 1;
-            self.field[column as usize][row as usize] = self.players[played_id].get_board_value();
-            self.last_filled_for_column[column as usize] += 1;
+        pub fn create_and_add_player(&mut self, symbol: char){
+            let temp_value = (self.values_players.len() + 1) as u8;
+            let temp_player = HumanPlayer::new(temp_value, symbol);
+            self.values_players.insert(temp_value, Box::new(temp_player));
         }
 
+        pub fn place_on_board(&mut self, column: u8, played_id: u8)
+        {
+            let row = self.last_filled_for_column[column as usize] + 1;
+
+            let board_value = match self.values_players.get(&played_id){
+                Some(player) => player.get_board_value(),
+                None => panic!("Invalid played_id")
+            };
+            self.field[column as usize][row as usize] = board_value;
+            self.last_filled_for_column[column as usize] += 1;
+        }
 
         fn draw_board(&self)
         {
@@ -66,7 +76,7 @@ pub mod game{
                 for cell in column.iter(){
                     match self.values_players.get(cell){
                         Some(player) => println!("{} ", player.get_board_symbol()),
-                        None() => print!("{} ", EMPTY_PLACE_SYMBOL)
+                        None => print!("{} ", EMPTY_PLACE_SYMBOL)
                     }
                 }
                 print!("\n");
@@ -74,9 +84,13 @@ pub mod game{
         }
 
         pub fn turn(&mut self){
-            for player in self.values_players.values().enumerate(){
+            for player_id in 0..self.values_players.len(){
                 self.draw_board();
-                self.place_on_board(player.1.play(), player.0);
+                let player = self.values_players.get(&(player_id as u8));
+                match player{
+                    Some(player) =>self.place_on_board(player.play(None), player_id as u8),
+                    None => panic!("Player not found")
+                }
             }
         }
 
