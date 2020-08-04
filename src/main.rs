@@ -10,6 +10,6 @@ fn main()
     let mut gs: GameState = GameState::init();
 
     gs.create_and_add_player('+');
-    gs.create_and_add_player('-');
+    gs.create_and_add_player('O');
     gs.turn();
 }

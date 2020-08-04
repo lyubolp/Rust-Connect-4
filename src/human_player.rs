@@ -7,24 +7,25 @@ pub mod human_player{
         board_symbol: char
     }
 
-    pub fn read_from_keyboard() -> u8
+    pub fn read_from_keyboard(filled_columns: [u8; GAME_BOARD_SIZE.1]) -> Option<u8>
     {
-        let default_value: u8 = 0;
         let mut buffer = String::new();
         match io::stdin().read_line(&mut buffer){
             Ok(n) =>{
-                match buffer.parse::<u8>(){
-                    Ok(data) => data,
-                    Err(err) => {
-                        println!("Error: {}\n Setting it to default value {}", err, default_value);
-                        default_value
-                    }
+                let first_symbol = buffer.chars().next().unwrap();
+                match first_symbol.to_digit(10){
+                    Some(data) => {
+                        if (1 <= data && data < GAME_BOARD_SIZE.1 as u32) && filled_columns[(data - 1) as usize] < GAME_BOARD_SIZE.0 as u8 {
+                            Some(data as u8)
+                        }
+                        else{
+                            None
+                        }
+                    },
+                    None => None
                 }
-            }
-            Err(error) => {
-                println!("error: {}\n Setting it to default value: {}", error, default_value);
-                default_value
-            }
+            },
+            Err(error) => None
         }
     }
     impl HumanPlayer{
@@ -37,9 +38,13 @@ pub mod human_player{
     }
     impl Player for HumanPlayer{
 
-        fn play(&self, game_state: Option<GameState>) -> u8 {
-            println!("Please enter a column number (1-{}): ", GAME_BOARD_SIZE.0);
-            read_from_keyboard()
+        fn play(&self, game_state: &GameState) -> u8 {
+            println!("Please enter a column number (1-{}): ", GAME_BOARD_SIZE.1);
+            loop{
+                if let Some(value) = read_from_keyboard(game_state.get_filled_columns()){
+                    return value
+                }
+            }
         }
 
         fn get_board_value(&self) -> u8
