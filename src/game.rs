@@ -2,7 +2,6 @@ pub mod game {
     use std::collections::HashMap;
 
     use crate::human_player::human_player::HumanPlayer;
-    use std::borrow::{Borrow, BorrowMut};
 
     pub const EMPTY_PLACE_VALUE: u8 = 0;
     pub const EMPTY_PLACE_SYMBOL: char = '_';
@@ -170,11 +169,10 @@ pub mod game {
     #[cfg(test)]
     mod unit_tests{
         use super::*;
-        use crate::human_player::human_player::HumanPlayer;
 
         #[test]
         fn test_init(){
-            let mut gs = GameState::init();
+            let gs = GameState::init();
             assert_eq!(gs.get_field(), [[EMPTY_PLACE_VALUE; GAME_BOARD_SIZE.1]; GAME_BOARD_SIZE.0]);
             assert_eq!(gs.get_filled_columns(), [0; GAME_BOARD_SIZE.1])
         }

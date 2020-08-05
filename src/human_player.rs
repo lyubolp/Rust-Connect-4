@@ -1,6 +1,6 @@
 pub mod human_player{
     use crate::game::game::{Player, GameState, GAME_BOARD_SIZE};
-    use std::io::{self, Read};
+    use std::io::{self};
 
     pub struct HumanPlayer{
         board_value: u8,
@@ -11,7 +11,7 @@ pub mod human_player{
     {
         let mut buffer = String::new();
         match io::stdin().read_line(&mut buffer){
-            Ok(n) =>{
+            Ok(_) =>{
                 let first_symbol = buffer.chars().next().unwrap();
                 match first_symbol.to_digit(10){
                     Some(data) => {
@@ -25,7 +25,7 @@ pub mod human_player{
                     None => None
                 }
             },
-            Err(error) => None
+            Err(_) => None
         }
     }
     impl HumanPlayer{
@@ -54,6 +54,19 @@ pub mod human_player{
         fn get_board_symbol(&self) -> char
         {
             self.board_symbol
+        }
+    }
+
+    #[cfg(test)]
+    mod tests{
+        use super::*;
+
+        #[test]
+        fn test_getters(){
+            let player: HumanPlayer = HumanPlayer::new(1, '+');
+
+            assert_eq!(player.get_board_symbol(), '+');
+            assert_eq!(player.get_board_value(), 1);
         }
     }
 }
