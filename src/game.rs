@@ -107,21 +107,21 @@ pub mod game {
         }
         pub fn is_there_winning_move_from(&self, (row, column): (usize, usize)) -> (bool, Option<MoveType>) {
             let mut vertical_win: bool = column <= (GAME_BOARD_SIZE.1 - WINNING_LENGTH as usize);
-            let mut horizontal_win: bool = row <= (GAME_BOARD_SIZE.0 - WINNING_LENGTH as usize);
+            let mut horizontal_win: bool = row >= (GAME_BOARD_SIZE.0 - WINNING_LENGTH as usize);
             let mut right_diagonal_win: bool = vertical_win && horizontal_win;
-            let mut left_diagonal_win: bool = WINNING_LENGTH as usize <= column && (GAME_BOARD_SIZE.0 - WINNING_LENGTH as usize) <= row;
+            let mut left_diagonal_win: bool = WINNING_LENGTH as usize <= column && horizontal_win;
 
             for offset in 1..WINNING_LENGTH as usize {
                 if vertical_win && self.field[row][column] != self.field[row][column + offset] {
                     vertical_win = false;
                 }
-                if horizontal_win && self.field[row][column] != self.field[row + offset][column] {
+                if horizontal_win && self.field[row][column] != self.field[row - offset][column] {
                     horizontal_win = false;
                 }
-                if right_diagonal_win && self.field[row][column] != self.field[row + offset][column + offset] {
+                if right_diagonal_win && self.field[row][column] != self.field[row - offset][column + offset] {
                     right_diagonal_win = false;
                 }
-                if left_diagonal_win && self.field[row][column] != self.field[row + offset][column - offset] {
+                if left_diagonal_win && self.field[row][column] != self.field[row - offset][column - offset] {
                     left_diagonal_win = false;
                 }
             }
@@ -209,7 +209,7 @@ pub mod game {
         }
 
         #[test]
-        fn test_check_for_win(){
+        fn test_check_for_horizontal_win(){
             let mut gs = GameState::init();
 
             gs.create_and_add_player('+');
@@ -224,9 +224,11 @@ pub mod game {
             gs.place_on_board(1, 1);
 
             assert_eq!(gs.check_for_win(), true);
+        }
 
-            //Vertical win
-            gs = GameState::init();
+        #[test]
+        fn test_check_for_vertical_win(){
+            let mut gs = GameState::init();
 
             gs.create_and_add_player('+');
             gs.create_and_add_player('O');
@@ -240,8 +242,11 @@ pub mod game {
 
             assert_eq!(gs.check_for_win(), true);
 
-            //Right diagonal win
-            gs = GameState::init();
+        }
+
+        #[test]
+        fn test_check_for_right_diagonal_win(){
+            let mut gs = GameState::init();
 
             gs.create_and_add_player('+');
             gs.create_and_add_player('O');
@@ -264,6 +269,34 @@ pub mod game {
             gs.place_on_board(6,2);
 
             gs.place_on_board(4,1);
+
+            assert_eq!(gs.check_for_win(), true);
+        }
+
+        #[test]
+        fn test_check_for_left_diagonal_win(){
+            let mut gs: GameState = GameState::init();
+
+            gs.create_and_add_player('+');
+            gs.create_and_add_player('O');
+
+            gs.place_on_board(5, 1);
+            assert_eq!(gs.check_for_win(), false);
+            gs.place_on_board(4, 2);
+
+            gs.place_on_board(4, 1);
+            gs.place_on_board(3, 2);
+
+            gs.place_on_board(2, 1);
+            gs.place_on_board(3, 2);
+
+            gs.place_on_board(3, 1);
+            gs.place_on_board(2, 2);
+
+            gs.place_on_board(2, 1);
+            gs.place_on_board(3, 2);
+
+            gs.place_on_board(2, 1);
 
             assert_eq!(gs.check_for_win(), true);
         }

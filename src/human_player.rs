@@ -15,7 +15,7 @@ pub mod human_player{
                 let first_symbol = buffer.chars().next().unwrap();
                 match first_symbol.to_digit(10){
                     Some(data) => {
-                        if (1 <= data && data < GAME_BOARD_SIZE.1 as u32) && filled_columns[(data - 1) as usize] < GAME_BOARD_SIZE.0 as u8 {
+                        if (1 <= data && data <= GAME_BOARD_SIZE.1 as u32) && filled_columns[(data - 1) as usize] < GAME_BOARD_SIZE.0 as u8 {
                             Some(data as u8)
                         }
                         else{
