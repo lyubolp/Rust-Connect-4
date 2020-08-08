@@ -1,7 +1,9 @@
 pub mod human_player{
-    use crate::game::game::{Player, GameState, GAME_BOARD_SIZE};
+    use crate::game::game::{Player, GameState, GAME_BOARD_SIZE, PlayerType};
     use std::io::{self};
 
+
+    #[derive(Copy, Clone)]
     pub struct HumanPlayer{
         board_value: u8,
         board_symbol: char
@@ -55,6 +57,8 @@ pub mod human_player{
         {
             self.board_symbol
         }
+
+        fn get_type(&self) -> PlayerType { PlayerType::Human}
     }
 
     #[cfg(test)]

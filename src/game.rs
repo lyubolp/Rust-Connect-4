@@ -2,6 +2,7 @@ pub mod game {
     use std::collections::HashMap;
 
     use crate::human_player::human_player::HumanPlayer;
+    use crate::bot::bot::Bot;
 
     pub const EMPTY_PLACE_VALUE: u8 = 0;
     pub const EMPTY_PLACE_SYMBOL: char = '_';
@@ -10,11 +11,17 @@ pub mod game {
 
     pub const GAME_BOARD_SIZE: (usize, usize) = (6, 7); //(rows, cols)
 
+    pub enum PlayerType{
+        Human,
+        Bot
+    }
     pub trait Player {
         fn play(&self, game_state: &GameState) -> u8;
 
         fn get_board_value(&self) -> u8;
         fn get_board_symbol(&self) -> char;
+
+        fn get_type(&self) -> PlayerType;
     }
 
     pub struct GameState {
@@ -31,6 +38,26 @@ pub mod game {
         RightDiagonal,
     }
 
+    impl Clone for GameState{
+        fn clone(&self) -> Self {
+            GameState{
+                field: self.field.clone(),
+                last_filled_for_column: self.last_filled_for_column.clone(),
+                values_players: {
+                    let mut temp_map: HashMap<u8, Box<dyn Player>> = HashMap::new();
+                    for (k,v) in self.values_players.iter(){
+                        match v.get_type(){
+                            PlayerType::Human => temp_map.insert(*k, Box::new(HumanPlayer::new(v.get_board_value(), v.get_board_symbol()))),
+                            PlayerType::Bot => temp_map.insert(*k, Box::new(Bot::new(v.get_board_value(), v.get_board_symbol())))
+                        };
+                    };
+                    temp_map
+                },
+                is_game_playing: self.is_game_playing.clone()
+            }
+        }
+
+    }
     impl GameState {
         //Constructor
         pub fn init() -> GameState {
@@ -60,6 +87,11 @@ pub mod game {
             let temp_player = HumanPlayer::new(temp_value, symbol);
             self.values_players.insert(temp_value, Box::new(temp_player));
         }
+        pub fn create_and_add_bot(&mut self, symbol: char, level: u8){
+            let temp_value = (self.values_players.len() + 1) as u8;
+            let temp_player: Bot = Bot::new(temp_value, symbol, level);
+            self.values_players.insert(temp_value, Box::new(temp_player));
+        }
         pub fn place_on_board(&mut self, column: u8, played_id: u8) {
             let row = GAME_BOARD_SIZE.0 as u8 - self.last_filled_for_column[(column - 1) as usize] - 1;
 
@@ -70,6 +102,7 @@ pub mod game {
             self.field[row as usize][(column - 1) as usize] = board_value;
             self.last_filled_for_column[(column - 1) as usize] += 1;
         } //TODO Maybe it should be private ?
+
         pub fn turn(&mut self) {
             while self.is_game_playing {
                 for player_id in 1..self.values_players.len() + 1 {
@@ -80,7 +113,7 @@ pub mod game {
                         Some(player) => {
                             let column = player.play(self);
                             self.place_on_board(column, player_id as u8);
-                            if self.check_for_win(){
+                            if self.check_for_win().0{
                                 println!("Player {} won !", player_id);
                                 self.is_game_playing = false;
                                 break;
@@ -91,22 +124,23 @@ pub mod game {
                 }
             }
         }
-        pub fn check_for_win(&self) -> bool {
+        pub fn check_for_win(&self) -> (bool, Option<MoveType>) {
             for row_iter_index in 0..GAME_BOARD_SIZE.0 {
                 for column_index in 0..GAME_BOARD_SIZE.1 {
                     let row_index = GAME_BOARD_SIZE.0 - row_iter_index - 1;
 
+                    let winning_move_tuple: (bool, Option<MoveType>) = self.is_there_winning_move_from((row_index, column_index));
                     if self.field[row_index][column_index] != EMPTY_PLACE_VALUE &&
-                        self.is_there_winning_move_from((row_index, column_index)).0 {
-                        return true;
+                        winning_move_tuple.0 {
+                        return winning_move_tuple;
                     }
                 }
             }
-            false
+            (false, None)
         }
         pub fn is_there_winning_move_from(&self, (row, column): (usize, usize)) -> (bool, Option<MoveType>) {
             let mut vertical_win: bool = column <= (GAME_BOARD_SIZE.1 - WINNING_LENGTH as usize);
-            let mut horizontal_win: bool = row >= (GAME_BOARD_SIZE.0 - WINNING_LENGTH as usize);
+            let mut horizontal_win: bool = row > (GAME_BOARD_SIZE.0 - WINNING_LENGTH as usize);
             let mut right_diagonal_win: bool = vertical_win && horizontal_win;
             let mut left_diagonal_win: bool = WINNING_LENGTH as usize <= column && horizontal_win;
 
@@ -145,7 +179,16 @@ pub mod game {
                 (false, win_type)
             }
         }
-
+        pub fn get_human_players_ids(&self) -> Vec<u8>{
+            let mut result: Vec<u8> = Vec::new();
+            for player in self.values_players.iter() {
+                match player.1.get_type(){
+                    PlayerType::Human => result.push(player.0.clone()),
+                    _ => {}
+                }
+            }
+            result
+        }
         //Private interactions
         fn draw_board(&self) {
             for column_name in 1..=GAME_BOARD_SIZE.1 {
@@ -215,13 +258,13 @@ pub mod game {
 
             //Horizontal win
             gs.place_on_board(1, 1);
-            assert_eq!(gs.check_for_win(), false);
+            assert_eq!(gs.check_for_win().0, false);
 
             gs.place_on_board(1, 1);
             gs.place_on_board(1, 1);
             gs.place_on_board(1, 1);
 
-            assert_eq!(gs.check_for_win(), true);
+            assert_eq!(gs.check_for_win().0, true);
         }
 
         #[test]
@@ -232,13 +275,13 @@ pub mod game {
             gs.create_and_add_player('O');
 
             gs.place_on_board(1, 1);
-            assert_eq!(gs.check_for_win(), false);
+            assert_eq!(gs.check_for_win().0, false);
 
             gs.place_on_board(2,1);
             gs.place_on_board(3,1);
             gs.place_on_board(4,1);
 
-            assert_eq!(gs.check_for_win(), true);
+            assert_eq!(gs.check_for_win().0, true);
 
         }
 
@@ -250,7 +293,7 @@ pub mod game {
             gs.create_and_add_player('O');
 
             gs.place_on_board(1, 1);
-            assert_eq!(gs.check_for_win(), false);
+            assert_eq!(gs.check_for_win().0, false);
 
             gs.place_on_board(2,2);
 
@@ -268,7 +311,7 @@ pub mod game {
 
             gs.place_on_board(4,1);
 
-            assert_eq!(gs.check_for_win(), true);
+            assert_eq!(gs.check_for_win().0, true);
         }
 
         #[test]
@@ -279,7 +322,7 @@ pub mod game {
             gs.create_and_add_player('O');
 
             gs.place_on_board(5, 1);
-            assert_eq!(gs.check_for_win(), false);
+            assert_eq!(gs.check_for_win().0, false);
             gs.place_on_board(4, 2);
 
             gs.place_on_board(4, 1);
@@ -296,7 +339,7 @@ pub mod game {
 
             gs.place_on_board(2, 1);
 
-            assert_eq!(gs.check_for_win(), true);
+            assert_eq!(gs.check_for_win().0, true);
         }
     }
 }

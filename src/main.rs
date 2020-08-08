@@ -9,6 +9,7 @@ fn main()
 
     let mut gs: GameState = GameState::init();
     gs.create_and_add_player('+');
-    gs.create_and_add_player('O');
+    gs.create_and_add_bot('O', 3);
+
     gs.turn();
 }
