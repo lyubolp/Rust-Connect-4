@@ -55,30 +55,30 @@ pub mod bot{
                 }
             }
             else{
-                let mut max_game_value = game_state.get_max_connected_from(GAME_BOARD_SIZE.0 - 1, 0);
+                let mut max_game_value = game_state.get_max_connected_from(GAME_BOARD_SIZE.0 - 1, 0).0;
 
                 for (row_index, row) in game_state.get_field().iter().enumerate(){
                     for (column_index, _) in row.iter().enumerate(){
                         let current_game_state_score = game_state.get_max_connected_from(GAME_BOARD_SIZE.0 - 1 - row_index, column_index);
-                        max_game_value = max(max_game_value, current_game_state_score);
+                        max_game_value = max(max_game_value, current_game_state_score.0);
                     }
                 }
 
                 if is_bot_next_move {
-                    -max_game_value
+                    -1 * max_game_value as i32
                 }
                 else{
-                    max_game_value
+                    max_game_value as i32
                 }
             }
         }
         fn take_decision(&self, game_state: &GameState) -> u8{
             let mut current_game_states: Vec<(GameState, i32)> = vec!((game_state.clone(), 0));
-            for depth_level in 0..self.level{
+            /*for depth_level in 0..self.level{
                 for current_game in current_game_states{
                     self.generate_game_states(&current_game.0, current_game.0.get_next_player_to_move_id());
                 }
-            };
+            };*/
             3
         }
 

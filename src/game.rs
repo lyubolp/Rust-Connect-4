@@ -3,8 +3,6 @@ pub mod game {
 
     use crate::human_player::human_player::HumanPlayer;
     use crate::bot::bot::Bot;
-    use std::cmp::max;
-    use std::env::current_exe;
 
     pub const EMPTY_PLACE_VALUE: u8 = 0;
     pub const EMPTY_PLACE_SYMBOL: char = '_';
@@ -157,10 +155,10 @@ pub mod game {
         }
 
         pub fn get_max_connected_from(& self, row: usize, column: usize) -> (u8, MoveType){
-            let mut current_vertical: (u8, MoveType) = (1, MoveType::Vertical);
-            let mut current_horizontal: (u8, MoveType) = (1, MoveType::Horizontal);
-            let mut current_right_diagonal: (u8, MoveType) = (1, MoveType::RightDiagonal);
-            let mut current_left_diagonal: (u8, MoveType) = (1, MoveType::LeftDiagonal);
+            let current_vertical: (u8, MoveType) = (1, MoveType::Vertical);
+            let current_horizontal: (u8, MoveType) = (1, MoveType::Horizontal);
+            let current_right_diagonal: (u8, MoveType) = (1, MoveType::RightDiagonal);
+            let current_left_diagonal: (u8, MoveType) = (1, MoveType::LeftDiagonal);
 
             let mut holder: Vec<(u8, MoveType)> = vec!(current_vertical, current_horizontal, current_left_diagonal, current_right_diagonal);
 
