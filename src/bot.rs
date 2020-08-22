@@ -1,6 +1,9 @@
 pub mod bot{
     use crate::game::game::{GameState, GAME_BOARD_SIZE, MoveType, Player, PlayerType, EMPTY_PLACE_VALUE};
     use std::borrow::BorrowMut;
+    use std::f32::{INFINITY, NEG_INFINITY};
+    use std::i32::{MAX, MIN};
+    use std::cmp::max;
 
 
     #[derive(Copy, Clone)]
@@ -11,7 +14,7 @@ pub mod bot{
     }
 
     fn does_player_have_winning_move(game_state: &GameState) -> Option<(u8, u8, MoveType)>{
-        //TOOD - Refactor
+        //TODO - Refactor
         let human_player_id: Vec<u8> = game_state.get_human_players_ids();
         for new_move_column in 1..=GAME_BOARD_SIZE.1{
             let mut new_game_state= game_state.clone();
@@ -31,7 +34,7 @@ pub mod bot{
         None
     }
     impl Bot{
-        fn generate_game_states(game_state: &GameState, id_to_play: u8) -> Vec<GameState>{
+        fn generate_game_states(&self, game_state: &GameState, id_to_play: u8) -> Vec<GameState>{
             let mut game_states: Vec<GameState> = Vec::new();
             for new_move_column in 1..=GAME_BOARD_SIZE.1{
                 let mut new_game_state= game_state.clone();
@@ -40,31 +43,42 @@ pub mod bot{
             };
             game_states
         }
-        fn evaluate_board(game_state: &GameState) -> i16{
-            let mut placed = 0;
-            for row in game_state.get_field().iter(){
-                for cell in row.iter(){
-                    if cell != EMPTY_PLACE_VALUE{
-                        placed+= 1;
-                    }
-                }
-            }
-            let our_win: bool = (placed % 2 == 0);
+        fn evaluate_board(&self, game_state: &GameState) -> i32{
+            let is_bot_next_move: bool = (game_state.get_next_player_to_move_id() == self.board_value); //If the next move is for the bot
 
             if game_state.check_for_win().0{
-                if our_win{
-                    1000
+                if is_bot_next_move {
+                    MIN
                 }
                 else{
-                    -1000
+                    MAX
                 }
             }
             else{
-                0
+                let mut max_game_value = game_state.get_max_connected_from(GAME_BOARD_SIZE.0 - 1, 0);
+
+                for (row_index, row) in game_state.get_field().iter().enumerate(){
+                    for (column_index, _) in row.iter().enumerate(){
+                        let current_game_state_score = game_state.get_max_connected_from(GAME_BOARD_SIZE.0 - 1 - row_index, column_index);
+                        max_game_value = max(max_game_value, current_game_state_score);
+                    }
+                }
+
+                if is_bot_next_move {
+                    -max_game_value
+                }
+                else{
+                    max_game_value
+                }
             }
         }
         fn take_decision(&self, game_state: &GameState) -> u8{
-            //TODO
+            let mut current_game_states: Vec<(GameState, i32)> = vec!((game_state.clone(), 0));
+            for depth_level in 0..self.level{
+                for current_game in current_game_states{
+                    self.generate_game_states(&current_game.0, current_game.0.get_next_player_to_move_id());
+                }
+            };
             3
         }
 
